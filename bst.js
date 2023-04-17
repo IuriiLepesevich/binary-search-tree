@@ -161,13 +161,13 @@ function Tree(array) {
     let total = [];
 
     if (callback) {
-      preorder(callback, tempRoot.leftChild);
+      inorder(callback, tempRoot.leftChild);
       callback(tempRoot);
-      preorder(callback, tempRoot.rightChild);
+      inorder(callback, tempRoot.rightChild);
     } else {
-      total = total.concat(preorder(callback, tempRoot.leftChild));
+      total = total.concat(inorder(callback, tempRoot.leftChild));
       total = total.concat([tempRoot]);
-      total = total.concat(preorder(callback, tempRoot.rightChild));
+      total = total.concat(inorder(callback, tempRoot.rightChild));
     }
 
     return callback ? undefined : total;
@@ -178,12 +178,12 @@ function Tree(array) {
     let total = [];
 
     if (callback) {
-      preorder(callback, tempRoot.leftChild);
-      preorder(callback, tempRoot.rightChild);
+      postorder(callback, tempRoot.leftChild);
+      postorder(callback, tempRoot.rightChild);
       callback(tempRoot);
     } else {
-      total = total.concat(preorder(callback, tempRoot.leftChild));
-      total = total.concat(preorder(callback, tempRoot.rightChild));
+      total = total.concat(postorder(callback, tempRoot.leftChild));
+      total = total.concat(postorder(callback, tempRoot.rightChild));
       total = total.concat([tempRoot]);
     }
 
@@ -191,17 +191,28 @@ function Tree(array) {
   };
 
   const height = (node, prevHeight = -1) => {
+    if (!node) return [0];
     let currentHeight = prevHeight + 1;
     let heights = [];
     if (!node?.leftChild && !node?.rightChild) return currentHeight;
 
-    if (node.leftChild)
-      heights = heights.concat(height(node.leftChild, currentHeight));
-    if (node.rightChild)
-      heights = heights.concat(height(node.rightChild, currentHeight));
+    heights = heights.concat(height(node.leftChild, currentHeight));
+    heights = heights.concat(height(node.rightChild, currentHeight));
 
     return Math.max(...heights);
   };
+
+  function heigthHelper(node, prevHeight = -1) {
+    if (!node) return [0];
+    let currentHeight = prevHeight + 1;
+    let heights = [];
+    if (!node?.leftChild && !node?.rightChild) return [currentHeight];
+
+    heights = heights.concat(height(node.leftChild, currentHeight));
+    heights = heights.concat(height(node.rightChild, currentHeight));
+
+    return heights;
+  }
 
   const depth = (node, tempRoot = root) => {
     let depthValue = 1;
@@ -221,9 +232,15 @@ function Tree(array) {
 
     while (queue[0]) {
       const current = queue.shift();
-      const leftHeight = height(current.leftChild);
-      const rightHeight = height(current.rightChild);
-      if (Math.abs(leftHeight - rightHeight) > 1) return false;
+      const leftHeights = heigthHelper(current.leftChild);
+      const rightHeights = heigthHelper(current.rightChild);
+      const leftMin = Math.min(...leftHeights);
+      const leftMax = Math.max(...leftHeights);
+      const rightMin = Math.min(...rightHeights);
+      const rightMax = Math.max(...rightHeights);
+      const diff1 = Math.abs(leftMin - rightMax);
+      const diff2 = Math.abs(leftMax - rightMin);
+      if (diff1 > 1 || diff2 > 1) return false;
 
       if (current.leftChild) queue.push(current.leftChild);
       if (current.rightChild) queue.push(current.rightChild);
@@ -236,7 +253,7 @@ function Tree(array) {
     if (this.isBalanced()) return;
 
     const valuesArray = [];
-    levelOrder((elem) => valuesArray.push(elem.value));
+    inorder((elem) => valuesArray.push(elem.value));
     this.root = buildTree(valuesArray);
   }
 
@@ -273,6 +290,7 @@ function Tree(array) {
     depth,
     isBalanced,
     rebalance,
+    heigthHelper,
   };
 }
 
